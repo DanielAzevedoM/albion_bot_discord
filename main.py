@@ -23,27 +23,22 @@ CARGO_ID = 1326098802146414624  # Substitua pelo ID real do cargo que será atri
 # Web Server para manter online
 app = Flask('')
 
-
 @app.route('/')
 def home():
     return "Bot Albion ativo!"
 
-
 def run():
     app.run(host='0.0.0.0', port=8080)
-
 
 def keep_alive():
     t = Thread(target=run)
     t.start()
-
 
 # Bot
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
-
 
 async def get_guild_members():
     try:
@@ -56,7 +51,6 @@ async def get_guild_members():
     except Exception as e:
         logger.error(f"Erro ao buscar membros: {str(e)}")
         return None
-
 
 @bot.event
 async def on_ready():
@@ -73,45 +67,36 @@ async def on_ready():
         verificar_membros.start()
         logger.info("Tarefa de verificação iniciada")
 
-
-@bot.tree.command(name="register",
-                  description="Registra seu nickname da guild")
+@bot.tree.command(name="register", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion")
 async def register(interaction: discord.Interaction, nickname: str):
     try:
         await interaction.response.defer(ephemeral=True)
 
-        # Verifica se o usuário já está registrado
         guild = interaction.guild
         for member in guild.members:
-            if member.id == interaction.user.id and member.nick and member.nick.startswith(
-                    IM_PREFIX):
+            if member.id == interaction.user.id and member.nick and member.nick.startswith(IM_PREFIX):
                 return await interaction.followup.send(
                     f"⚠️ Você já está registrado como: {member.nick}",
                     ephemeral=True)
 
-        # Verifica membros da guild
         membros = await get_guild_members()
         if not membros:
             return await interaction.followup.send(
                 "🔴 Erro ao verificar a guild. Tente novamente mais tarde.",
                 ephemeral=True)
 
-        # Verifica se o nickname já está sendo usado por outro membro
         for member in guild.members:
-            if member.nick and member.nick.lower(
-            ) == f"{IM_PREFIX} {nickname}".lower():
+            if member.nick and member.nick.lower() == f"{IM_PREFIX} {nickname}".lower():
                 return await interaction.followup.send(
                     f"⚠️ O nickname [IM] {nickname} já está sendo usado por outro membro",
                     ephemeral=True)
 
-        # Verifica se está na guild do Albion
         if nickname.lower() not in [m['Name'].lower() for m in membros]:
             return await interaction.followup.send(
                 "🔴 Você não está na guild do Albion ou digitou seu nickname errado",
                 ephemeral=True)
 
-        # Atualiza nickname e atribui cargo
         cargo = guild.get_role(CARGO_ID)
         if not cargo:
             return await interaction.followup.send(
@@ -121,8 +106,7 @@ async def register(interaction: discord.Interaction, nickname: str):
             await interaction.user.edit(nick=f"{IM_PREFIX} {nickname}")
             await interaction.user.add_roles(cargo)
 
-            logger.info(
-                f"Novo registro: {interaction.user.name} como {nickname}")
+            logger.info(f"Novo registro: {interaction.user.name} como {nickname}")
             await interaction.followup.send(
                 f"✅ Registro completo!\n"
                 f"Seu nickname foi atualizado para: {IM_PREFIX} {nickname}\n"
@@ -140,7 +124,6 @@ async def register(interaction: discord.Interaction, nickname: str):
         logger.error(f"Erro no comando register: {str(e)}")
         await interaction.followup.send(
             "🔴 Ocorreu um erro ao processar seu registro", ephemeral=True)
-
 
 @tasks.loop(seconds=30)
 async def verificar_membros():
@@ -166,11 +149,8 @@ async def verificar_membros():
         atualizados = 0
 
         for member in guild.members:
-            # Remove o prefixo e espaço, se existir
-            nickname = member.nick.replace(IM_PREFIX, '', 1).strip()
-
-            # Confirma que não consta mais na guild (insensível a maiúsculas)
-            if nickname.lower() not in [n.lower() for n in nomes_albion]:
+            if member.nick and member.nick.startswith(IM_PREFIX):
+                nickname = member.nick.replace(IM_PREFIX, '', 1).strip()
 
                 if nickname.lower() not in nomes_albion:
                     try:
@@ -184,18 +164,15 @@ async def verificar_membros():
                             f"Erro ao atualizar {member.display_name}: {str(e)}"
                         )
 
-        logger.info(
-            f"Verificação completa. {atualizados} registros atualizados")
+        logger.info(f"Verificação completa. {atualizados} registros atualizados")
 
     except Exception as e:
         logger.error(f"Erro na verificação periódica: {str(e)}")
-
 
 @verificar_membros.before_loop
 async def antes_da_verificacao():
     await bot.wait_until_ready()
     logger.info("Aguardando bot estar pronto para verificação...")
-
 
 # Mantém o bot online
 keep_alive()

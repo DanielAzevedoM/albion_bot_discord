@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 
 # Configurações
 TOKEN = os.environ['TOKEN']
-GUILD_ID_MAIN = 'YNRMcsuVSRWTBs0y4mZ-SQ'  # Substitua pelo ID real do servidor IMORTAIS
-GUILD_ID_ACADEMY = 'tIvhXYTrSby2f_WPUQj2nQ'  # Substitua pelo ID real do servidor IMORTAIS ACADEMY
+GUILD_ID_MAIN = 'YNRMcsuVSRWTBs0y4mZ-SQ'  # ID do servidor IMORTAIS
+GUILD_ID_ACADEMY = 'tIvhXYTrSby2f_WPUQj2nQ'  # ID do servidor IMORTAIS ACADEMY
 API_URL_MAIN = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_MAIN}/members'
 API_URL_ACADEMY = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_ACADEMY}/members'
 IM_PREFIX = '[IM]'
 AC_PREFIX = '[AC]'
-CARGO_ID_IM = 1028036606680117248  # Substitua pelo ID real do cargo IMORTAIS
-CARGO_ID_AC = 1087437619874513028  # Substitua pelo ID real do cargo IMORTAIS ACADEMY
+CARGO_ID_IM = 1028036606680117248  # ID do cargo IMORTAIS
+CARGO_ID_AC = 1087437619874513028  # ID do cargo IMORTAIS ACADEMY
 
 # Web Server para manter online
 app = Flask('')
@@ -43,9 +43,7 @@ def keep_alive():
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-
-# Mudamos para commands.Bot para slash commands
-bot = commands.Bot(command_prefix='!', intents=intents)  # Prefixo não é usado para slash commands
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 async def get_guild_members(api_url):
     try:
@@ -75,7 +73,7 @@ async def on_ready():
         verificar_membros.start()
         logger.info("Tarefa de verificação iniciada")
 
-@bot.tree.command(name="register", description="Registra seu nickname da guild")
+@bot.tree.command(name="registro", description="Registra seu nickname na guild IMORTAIS")
 @app_commands.describe(
     nickname="Seu nome de jogador no Albion",
     guild="Escolha entre IM ou AC"
@@ -84,7 +82,7 @@ async def on_ready():
     app_commands.Choice(name="IMORTAIS", value="IM"),
     app_commands.Choice(name="IMORTAIS ACADEMY", value="AC")
 ])
-async def register(interaction: discord.Interaction, nickname: str, guild: app_commands.Choice[str]):
+async def registro(interaction: discord.Interaction, nickname: str, guild: app_commands.Choice[str]):
     try:
         await interaction.response.defer(ephemeral=True)
 
@@ -141,7 +139,6 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
             embed.add_field(name="Cargo Atribuído", value=cargo.name, inline=False)
             embed.set_footer(text=f"Usuário: {interaction.user.display_name}")
             
-            # Envia a mensagem no canal atual
             await interaction.channel.send(embed=embed)
 
             await interaction.followup.send(
@@ -159,7 +156,7 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
                                           ephemeral=True)
 
     except Exception as e:
-        logger.error(f"Erro no comando register: {str(e)}")
+        logger.error(f"Erro no comando registro: {str(e)}")
         await interaction.followup.send(
             "🔴 Ocorreu um erro ao processar seu registro", ephemeral=True)
 
@@ -192,7 +189,6 @@ async def verificar_membros():
             prefix_im = member.nick and IM_PREFIX in member.nick
             prefix_ac = member.nick and AC_PREFIX in member.nick
 
-            # Remove IM se tem cargo mas não tem prefixo ou nome não está na guild
             if tem_cargo_im:
                 if not prefix_im or not member.nick:
                     try:
@@ -214,7 +210,6 @@ async def verificar_membros():
                     except Exception as e:
                         logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
 
-            # Remove AC se tem cargo mas não tem prefixo ou nome não está na guild
             if tem_cargo_ac:
                 if not prefix_ac or not member.nick:
                     try:

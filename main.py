@@ -43,7 +43,9 @@ def keep_alive():
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='/', intents=intents)
+
+# Mudamos para commands.Bot para slash commands
+bot = commands.Bot(command_prefix='!', intents=intents)  # Prefixo não é usado para slash commands
 
 async def get_guild_members(api_url):
     try:
@@ -61,6 +63,8 @@ async def get_guild_members(api_url):
 async def on_ready():
     logger.info(f'Bot conectado como {bot.user} (ID: {bot.user.id})')
     logger.info(f'Conectado em {len(bot.guilds)} servidor(es)')
+    
+    # Sincroniza os comandos globais
     try:
         synced = await bot.tree.sync()
         logger.info(f"Comandos sincronizados: {len(synced)}")
@@ -72,7 +76,10 @@ async def on_ready():
         logger.info("Tarefa de verificação iniciada")
 
 @bot.tree.command(name="register", description="Registra seu nickname da guild")
-@app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
+@app_commands.describe(
+    nickname="Seu nome de jogador no Albion",
+    guild="Escolha entre IM ou AC"
+)
 @app_commands.choices(guild=[
     app_commands.Choice(name="IMORTAIS", value="IM"),
     app_commands.Choice(name="IMORTAIS ACADEMY", value="AC")

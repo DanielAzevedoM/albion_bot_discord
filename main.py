@@ -62,7 +62,7 @@ async def on_ready():
     logger.info(f'Bot conectado como {bot.user} (ID: {bot.user.id})')
     logger.info(f'Conectado em {len(bot.guilds)} servidor(es)')
     try:
-        synced = await bot.tree.sync()
+        synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID_MAIN))
         logger.info(f"Comandos sincronizados: {len(synced)}")
     except Exception as e:
         logger.error(f"Erro ao sincronizar comandos: {e}")
@@ -71,7 +71,8 @@ async def on_ready():
         verificar_membros.start()
         logger.info("Tarefa de verificação iniciada")
 
-bot.tree.command(name="register", description="Registra seu nickname da guild")
+
+bot.tree.command(name="registerd", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
 @app_commands.choices(guild=[
     app_commands.Choice(name="IMORTAIS", value="IM"),
@@ -175,53 +176,58 @@ async def verificar_membros():
         atualizados = 0
 
         for member in guild.members:
-            if member.nick:
-                nome_limpo = re.sub(r'\[.*?\]', '', member.nick).strip()  # Remove todas as tags como [IM], [ENG], etc.
-                nome_limpo = re.sub(r'[^\w\s-]', '', nome_limpo).strip()  # Remove emojis e símbolos
+            tem_cargo_im = cargo_im and cargo_im in member.roles
+            tem_cargo_ac = cargo_ac and cargo_ac in member.roles
+            prefix_im = IM_PREFIX in (member.nick or '')
+            prefix_ac = AC_PREFIX in (member.nick or '')
 
-                if IM_PREFIX in member.nick:
-                    if nome_limpo.lower() not in nomes_main:
-                        try:
-                            await member.edit(nick=None)
-                            if cargo_im:
-                                await member.remove_roles(cargo_im)
-                            logger.info(f"Removido registro de: {member.display_name} (IM)")
-                            atualizados += 1
-                        except Exception as e:
-                            logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
-
-                elif AC_PREFIX in member.nick:
-                    if nome_limpo.lower() not in nomes_academy:
-                        try:
-                            await member.edit(nick=None)
-                            if cargo_ac:
-                                await member.remove_roles(cargo_ac)
-                            logger.info(f"Removido registro de: {member.display_name} (AC)")
-                            atualizados += 1
-                        except Exception as e:
-                            logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
-
-            else:
-                if cargo_im and cargo_im in member.roles:
+            # Remove IM se tem cargo mas não tem prefixo ou nome não está na guild
+            if tem_cargo_im:
+                if not prefix_im or not member.nick:
                     try:
                         await member.remove_roles(cargo_im)
-                        logger.info(f"Removido cargo [IM] de {member.display_name} sem nick válido")
+                        logger.info(f"Removido cargo [IM] de {member.display_name} sem prefixo ou nick")
                         atualizados += 1
                     except Exception as e:
                         logger.error(f"Erro ao remover cargo [IM]: {str(e)}")
+                    continue
+                nome_limpo = re.sub(r'\[.*?\]', '', member.nick).strip()
+                nome_limpo = re.sub(r'[^\w\s-]', '', nome_limpo).strip()
+                if nome_limpo.lower() not in nomes_main:
+                    try:
+                        await member.edit(nick=None)
+                        await member.remove_roles(cargo_im)
+                        logger.info(f"Removido registro de: {member.display_name} (IM)")
+                        atualizados += 1
+                    except Exception as e:
+                        logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
 
-                if cargo_ac and cargo_ac in member.roles:
+            # Remove AC se tem cargo mas não tem prefixo ou nome não está na guild
+            if tem_cargo_ac:
+                if not prefix_ac or not member.nick:
                     try:
                         await member.remove_roles(cargo_ac)
-                        logger.info(f"Removido cargo [AC] de {member.display_name} sem nick válido")
+                        logger.info(f"Removido cargo [AC] de {member.display_name} sem prefixo ou nick")
                         atualizados += 1
                     except Exception as e:
                         logger.error(f"Erro ao remover cargo [AC]: {str(e)}")
+                    continue
+                nome_limpo = re.sub(r'\[.*?\]', '', member.nick).strip()
+                nome_limpo = re.sub(r'[^\w\s-]', '', nome_limpo).strip()
+                if nome_limpo.lower() not in nomes_academy:
+                    try:
+                        await member.edit(nick=None)
+                        await member.remove_roles(cargo_ac)
+                        logger.info(f"Removido registro de: {member.display_name} (AC)")
+                        atualizados += 1
+                    except Exception as e:
+                        logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
 
         logger.info(f"Verificação completa. {atualizados} registros atualizados")
 
     except Exception as e:
         logger.error(f"Erro na verificação periódica: {str(e)}")
+
 
 @verificar_membros.before_loop
 async def antes_da_verificacao():

@@ -142,7 +142,7 @@ async def register(interaction: discord.Interaction, nickname: str):
             "🔴 Ocorreu um erro ao processar seu registro", ephemeral=True)
 
 
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=2)
 async def verificar_membros():
     try:
         logger.info("Iniciando verificação periódica...")

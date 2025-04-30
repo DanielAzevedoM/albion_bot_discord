@@ -166,8 +166,11 @@ async def verificar_membros():
         atualizados = 0
 
         for member in guild.members:
-            if member.nick and member.nick.startswith(IM_PREFIX):
-                nickname = member.nick[len(IM_PREFIX) + 1:].strip()
+            # Remove o prefixo e espaço, se existir
+            nickname = member.nick.replace(IM_PREFIX, '', 1).strip()
+
+            # Confirma que não consta mais na guild (insensível a maiúsculas)
+            if nickname.lower() not in [n.lower() for n in nomes_albion]:
 
                 if nickname.lower() not in nomes_albion:
                     try:

@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 
 # Configurações
 TOKEN = os.environ['TOKEN']
-GUILD_ID_MAIN = 'YNRMcsuVSRWTBs0y4mZ-SQ'
-GUILD_ID_ACADEMY = 'tIvhXYTrSby2f_WPUQj2nQ'
+GUILD_ID_MAIN = 'YNRMcsuVSRWTBs0y4mZ-SQ'  # Substitua pelo ID real do servidor IMORTAIS
+GUILD_ID_ACADEMY = 'tIvhXYTrSby2f_WPUQj2nQ'  # Substitua pelo ID real do servidor IMORTAIS ACADEMY
 API_URL_MAIN = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_MAIN}/members'
 API_URL_ACADEMY = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_ACADEMY}/members'
 IM_PREFIX = '[IM]'
 AC_PREFIX = '[AC]'
-CARGO_ID_IM = 1028036606680117248
-CARGO_ID_AC = 1087437619874513028
+CARGO_ID_IM = 1028036606680117248  # Substitua pelo ID real do cargo IMORTAIS
+CARGO_ID_AC = 1087437619874513028  # Substitua pelo ID real do cargo IMORTAIS ACADEMY
 
 # Web Server para manter online
 app = Flask('')
@@ -62,7 +62,7 @@ async def on_ready():
     logger.info(f'Bot conectado como {bot.user} (ID: {bot.user.id})')
     logger.info(f'Conectado em {len(bot.guilds)} servidor(es)')
     try:
-        synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID_MAIN))
+        synced = await bot.tree.sync()
         logger.info(f"Comandos sincronizados: {len(synced)}")
     except Exception as e:
         logger.error(f"Erro ao sincronizar comandos: {e}")
@@ -71,8 +71,7 @@ async def on_ready():
         verificar_membros.start()
         logger.info("Tarefa de verificação iniciada")
 
-
-bot.tree.command(name="register", description="Registra seu nickname da guild")
+@bot.tree.command(name="register", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
 @app_commands.choices(guild=[
     app_commands.Choice(name="IMORTAIS", value="IM"),
@@ -83,35 +82,38 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
         await interaction.response.defer(ephemeral=True)
 
         guild_choice = guild.value
-        guild = interaction.guild
+        guild_obj = interaction.guild
 
-        for member in guild.members:
-            if member.id == interaction.user.id and member.nick and (member.nick.startswith(IM_PREFIX) or member.nick.startswith(AC_PREFIX)):
+        # Verifica se o usuário já está registrado
+        member = guild_obj.get_member(interaction.user.id)
+        if member and member.nick and (member.nick.startswith(IM_PREFIX) or member.nick.startswith(AC_PREFIX)):
+            return await interaction.followup.send(
+                f"⚠️ Você já está registrado como: {member.nick}",
+                ephemeral=True)
+
+        # Verifica se o nickname já está em uso
+        for m in guild_obj.members:
+            if m.nick and (m.nick.lower() == f"{IM_PREFIX} {nickname}".lower() or m.nick.lower() == f"{AC_PREFIX} {nickname}".lower()):
                 return await interaction.followup.send(
-                    f"⚠️ Você já está registrado como: {member.nick}",
+                    f"⚠️ O nickname já está sendo usado por outro membro",
                     ephemeral=True)
 
+        # Verifica se o jogador está na guild selecionada
         membros = await get_guild_members(API_URL_MAIN if guild_choice == "IM" else API_URL_ACADEMY)
-
         if not membros:
             return await interaction.followup.send(
                 "🔴 Erro ao verificar a guild. Tente novamente mais tarde.",
                 ephemeral=True)
-
-        for member in guild.members:
-            if member.nick and (member.nick.lower() == f"{IM_PREFIX} {nickname}".lower() or member.nick.lower() == f"{AC_PREFIX} {nickname}".lower()):
-                return await interaction.followup.send(
-                    f"⚠️ O nickname já está sendo usado por outro membro",
-                    ephemeral=True)
 
         if nickname.lower() not in [m['Name'].lower() for m in membros]:
             return await interaction.followup.send(
                 "🔴 Você não está na guild selecionada ou digitou seu nickname errado",
                 ephemeral=True)
 
+        # Atualiza o nickname e adiciona o cargo
         prefix = IM_PREFIX if guild_choice == "IM" else AC_PREFIX
         cargo_id = CARGO_ID_IM if guild_choice == "IM" else CARGO_ID_AC
-        cargo = guild.get_role(cargo_id)
+        cargo = guild_obj.get_role(cargo_id)
 
         if not cargo:
             return await interaction.followup.send(
@@ -128,9 +130,11 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
                 color=discord.Color.green()
             )
             embed.add_field(name="Nickname", value=f"{prefix} {nickname}", inline=False)
-            embed.add_field(name="Guild ID", value=GUILD_ID_MAIN if guild_choice == "IM" else GUILD_ID_ACADEMY, inline=False)
+            embed.add_field(name="Guild", value="IMORTAIS" if guild_choice == "IM" else "IMORTAIS ACADEMY", inline=False)
             embed.add_field(name="Cargo Atribuído", value=cargo.name, inline=False)
             embed.set_footer(text=f"Usuário: {interaction.user.display_name}")
+            
+            # Envia a mensagem no canal atual
             await interaction.channel.send(embed=embed)
 
             await interaction.followup.send(
@@ -145,7 +149,7 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
                 ephemeral=True)
         except Exception as e:
             await interaction.followup.send(f"🔴 Erro inesperado: {str(e)}",
-                                            ephemeral=True)
+                                          ephemeral=True)
 
     except Exception as e:
         logger.error(f"Erro no comando register: {str(e)}")
@@ -178,8 +182,8 @@ async def verificar_membros():
         for member in guild.members:
             tem_cargo_im = cargo_im and cargo_im in member.roles
             tem_cargo_ac = cargo_ac and cargo_ac in member.roles
-            prefix_im = IM_PREFIX in (member.nick or '')
-            prefix_ac = AC_PREFIX in (member.nick or '')
+            prefix_im = member.nick and IM_PREFIX in member.nick
+            prefix_ac = member.nick and AC_PREFIX in member.nick
 
             # Remove IM se tem cargo mas não tem prefixo ou nome não está na guild
             if tem_cargo_im:
@@ -191,6 +195,7 @@ async def verificar_membros():
                     except Exception as e:
                         logger.error(f"Erro ao remover cargo [IM]: {str(e)}")
                     continue
+                
                 nome_limpo = re.sub(r'\[.*?\]', '', member.nick).strip()
                 nome_limpo = re.sub(r'[^\w\s-]', '', nome_limpo).strip()
                 if nome_limpo.lower() not in nomes_main:
@@ -212,6 +217,7 @@ async def verificar_membros():
                     except Exception as e:
                         logger.error(f"Erro ao remover cargo [AC]: {str(e)}")
                     continue
+                
                 nome_limpo = re.sub(r'\[.*?\]', '', member.nick).strip()
                 nome_limpo = re.sub(r'[^\w\s-]', '', nome_limpo).strip()
                 if nome_limpo.lower() not in nomes_academy:
@@ -227,7 +233,6 @@ async def verificar_membros():
 
     except Exception as e:
         logger.error(f"Erro na verificação periódica: {str(e)}")
-
 
 @verificar_membros.before_loop
 async def antes_da_verificacao():

@@ -22,8 +22,8 @@ API_URL_MAIN = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID
 API_URL_ACADEMY = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_ACADEMY}/members'
 IM_PREFIX = '[IM]'
 AC_PREFIX = '[AC]'
-CARGO_ID_IM = 1326098802146414624
-CARGO_ID_AC = 1367097116169867314
+CARGO_ID_IM = 1028036606680117248
+CARGO_ID_AC = 1087437619874513028
 
 # Web Server para manter online
 app = Flask('')

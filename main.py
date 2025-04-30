@@ -21,8 +21,8 @@ API_URL_MAIN = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID
 API_URL_ACADEMY = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_ACADEMY}/members'
 IM_PREFIX = '[IM]'
 AC_PREFIX = '[AC]'
-CARGO_ID_IM = 1326098802146414624 
-CARGO_ID_AC = 1367097116169867314 
+CARGO_ID_IM = 1326098802146414624  
+CARGO_ID_AC = 1367097116169867314  
 
 # Web Server para manter online
 app = Flask('')
@@ -186,6 +186,23 @@ async def verificar_membros():
                         atualizados += 1
                     except Exception as e:
                         logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
+
+            elif not member.nick:
+                if cargo_im and cargo_im in member.roles:
+                    try:
+                        await member.remove_roles(cargo_im)
+                        logger.info(f"Removido cargo [IM] de {member.display_name} sem nick válido")
+                        atualizados += 1
+                    except Exception as e:
+                        logger.error(f"Erro ao remover cargo [IM]: {str(e)}")
+
+                if cargo_ac and cargo_ac in member.roles:
+                    try:
+                        await member.remove_roles(cargo_ac)
+                        logger.info(f"Removido cargo [AC] de {member.display_name} sem nick válido")
+                        atualizados += 1
+                    except Exception as e:
+                        logger.error(f"Erro ao remover cargo [AC]: {str(e)}")
 
         logger.info(f"Verificação completa. {atualizados} registros atualizados")
 

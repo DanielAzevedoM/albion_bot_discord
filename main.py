@@ -135,8 +135,8 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
             await interaction.followup.send(
                 f"✅ Registro completo!\n"
                 f"Seu nickname foi atualizado para: {prefix} {nickname}\n"
-                f"Cargo {cargo.name} atribuído com sucesso!",
-                F"DEMOCREST É AMIGO DO RAGNALDO!!!"
+                f"Cargo {cargo.name} atribuído com sucesso!\n",
+                f"DEMOCREST É AMIGO DO RAGNALDO!!!",
                 ephemeral=True)
         except discord.Forbidden:
             await interaction.followup.send(

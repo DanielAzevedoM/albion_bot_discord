@@ -45,6 +45,65 @@ intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
+@bot.tree.command(name="register", description="Registra seu nickname da guild")
+@app_commands.describe(nickname="Seu nome de jogador no Albion")
+async def register(interaction: discord.Interaction, nickname: str):
+    try:
+        await interaction.response.defer(ephemeral=True)
+
+        guild = interaction.guild
+        for member in guild.members:
+            if member.id == interaction.user.id and member.nick and member.nick.startswith(IM_PREFIX):
+                return await interaction.followup.send(
+                    f"⚠️ Você já está registrado como: {member.nick}",
+                    ephemeral=True)
+
+        membros = await get_guild_members(API_URL_MAIN)
+        if not membros:
+            return await interaction.followup.send(
+                "🔴 Erro ao verificar a guild. Tente novamente mais tarde.",
+                ephemeral=True)
+
+        for member in guild.members:
+            if member.nick and member.nick.lower() == f"{IM_PREFIX} {nickname}".lower():
+                return await interaction.followup.send(
+                    f"⚠️ O nickname [IM] {nickname} já está sendo usado por outro membro",
+                    ephemeral=True)
+
+        if nickname.lower() not in [m['Name'].lower() for m in membros]:
+            return await interaction.followup.send(
+                "🔴 Você não está na guild do Albion ou digitou seu nickname errado",
+                ephemeral=True)
+
+        cargo = guild.get_role(CARGO_ID_IM)
+        if not cargo:
+            return await interaction.followup.send(
+                "🔴 Cargo não configurado no servidor", ephemeral=True)
+
+        try:
+            await interaction.user.edit(nick=f"{IM_PREFIX} {nickname}")
+            await interaction.user.add_roles(cargo)
+
+            logger.info(f"Novo registro: {interaction.user.name} como {nickname}")
+            await interaction.followup.send(
+                f"✅ Registro completo!\n"
+                f"Seu nickname foi atualizado para: {prefix} {nickname}\n"
+                f"Cargo {cargo.name} atribuído com sucesso!\n"
+                f"DEMOCREST É AMIGO DO RAGNALDO!!!",
+                ephemeral=True)
+        except discord.Forbidden:
+            await interaction.followup.send(
+                "🔴 Não tenho permissões para atualizar seu nickname/cargo",
+                ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"🔴 Erro inesperado: {str(e)}",
+                                            ephemeral=True)
+
+    except Exception as e:
+        logger.error(f"Erro no comando register: {str(e)}")
+        await interaction.followup.send(
+            "🔴 Ocorreu um erro ao processar seu registro", ephemeral=True)
+
 async def get_guild_members(api_url):
     try:
         async with aiohttp.ClientSession() as session:

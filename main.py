@@ -74,8 +74,8 @@ async def on_ready():
 @bot.tree.command(name="register", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
 @app_commands.choices(guild=[
-    app_commands.Choice(name="IMORTAIS", value="IM"),
-    app_commands.Choice(name="IMORTAIS ACADEMY", value="AC")
+    app_commands.Choice(name="IM", value="IM"),
+    app_commands.Choice(name="AC", value="AC")
 ])
 async def register(interaction: discord.Interaction, nickname: str, guild: app_commands.Choice[str]):
     try:
@@ -121,10 +121,22 @@ async def register(interaction: discord.Interaction, nickname: str, guild: app_c
             await interaction.user.add_roles(cargo)
 
             logger.info(f"Novo registro: {interaction.user.name} como {nickname} ({prefix})")
+
+            embed = discord.Embed(
+                title="✅ Novo Registro Efetuado",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Nickname", value=f"{prefix} {nickname}", inline=False)
+            embed.add_field(name="Guild ID", value=GUILD_ID_MAIN if guild_choice == "IM" else GUILD_ID_ACADEMY, inline=False)
+            embed.add_field(name="Cargo Atribuído", value=cargo.name, inline=False)
+            embed.set_footer(text=f"Usuário: {interaction.user.display_name}")
+            await interaction.channel.send(embed=embed)
+
             await interaction.followup.send(
                 f"✅ Registro completo!\n"
                 f"Seu nickname foi atualizado para: {prefix} {nickname}\n"
                 f"Cargo {cargo.name} atribuído com sucesso!",
+                F"DEMOCREST É AMIGO DO RAGNALDO!!!"
                 ephemeral=True)
         except discord.Forbidden:
             await interaction.followup.send(

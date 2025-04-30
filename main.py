@@ -74,8 +74,8 @@ async def on_ready():
 @bot.tree.command(name="register", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
 @app_commands.choices(guild=[
-    app_commands.Choice(name="IM", value="IM"),
-    app_commands.Choice(name="AC", value="AC")
+    app_commands.Choice(name="IMORTAIS", value="IM"),
+    app_commands.Choice(name="IMORTAIS ACADEMY", value="AC")
 ])
 async def register(interaction: discord.Interaction, nickname: str, guild: app_commands.Choice[str]):
     try:

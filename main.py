@@ -163,31 +163,34 @@ async def verificar_membros():
         atualizados = 0
 
         for member in guild.members:
-            if member.nick and member.nick.startswith(IM_PREFIX):
-                nickname = member.nick.replace(IM_PREFIX, '', 1).strip()
-                if nickname.lower() not in nomes_main:
-                    try:
-                        await member.edit(nick=None)
-                        if cargo_im:
-                            await member.remove_roles(cargo_im)
-                        logger.info(f"Removido registro de: {member.display_name} (IM)")
-                        atualizados += 1
-                    except Exception as e:
-                        logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
+            if member.nick:
+                if IM_PREFIX in member.nick:
+                    nickname = member.nick.split(IM_PREFIX, 1)[1].strip()
+                    nickname = nickname.split(']')[-1].strip() if ']' in nickname else nickname
+                    if nickname.lower() not in nomes_main:
+                        try:
+                            await member.edit(nick=None)
+                            if cargo_im:
+                                await member.remove_roles(cargo_im)
+                            logger.info(f"Removido registro de: {member.display_name} (IM)")
+                            atualizados += 1
+                        except Exception as e:
+                            logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
 
-            elif member.nick and member.nick.startswith(AC_PREFIX):
-                nickname = member.nick.replace(AC_PREFIX, '', 1).strip()
-                if nickname.lower() not in nomes_academy:
-                    try:
-                        await member.edit(nick=None)
-                        if cargo_ac:
-                            await member.remove_roles(cargo_ac)
-                        logger.info(f"Removido registro de: {member.display_name} (AC)")
-                        atualizados += 1
-                    except Exception as e:
-                        logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
+                elif AC_PREFIX in member.nick:
+                    nickname = member.nick.split(AC_PREFIX, 1)[1].strip()
+                    nickname = nickname.split(']')[-1].strip() if ']' in nickname else nickname
+                    if nickname.lower() not in nomes_academy:
+                        try:
+                            await member.edit(nick=None)
+                            if cargo_ac:
+                                await member.remove_roles(cargo_ac)
+                            logger.info(f"Removido registro de: {member.display_name} (AC)")
+                            atualizados += 1
+                        except Exception as e:
+                            logger.error(f"Erro ao atualizar {member.display_name}: {str(e)}")
 
-            elif not member.nick:
+            else:
                 if cargo_im and cargo_im in member.roles:
                     try:
                         await member.remove_roles(cargo_im)

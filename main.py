@@ -73,7 +73,7 @@ async def on_ready():
         verificar_membros.start()
         logger.info("Tarefa de verificação iniciada")
 
-@@bot.tree.command(name="register", description="Registra seu nickname da guild")
+@bot.tree.command(name="register", description="Registra seu nickname da guild")
 @app_commands.describe(nickname="Seu nome de jogador no Albion", guild="Escolha entre IM ou AC")
 @app_commands.choices(guild=[
     app_commands.Choice(name="IMORTAIS", value="IM"),

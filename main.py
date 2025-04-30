@@ -23,8 +23,8 @@ API_URL_MAIN = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID
 API_URL_ACADEMY = f'https://gameinfo.albiononline.com/api/gameinfo/guilds/{GUILD_ID_ACADEMY}/members'
 IM_PREFIX = '[IM]'
 AC_PREFIX = '[AC]'
-CARGO_ID_IM = 1326098802146414624  # ID do cargo IMORTAIS
-CARGO_ID_AC = 1367097116169867314  # ID do cargo IMORTAIS ACADEMY
+CARGO_ID_IM = 1028036606680117248  # ID do cargo IMORTAIS
+CARGO_ID_AC = 1087437619874513028  # ID do cargo IMORTAIS ACADEMY
 
 # Web Server para manter online
 app = Flask('')
@@ -87,7 +87,7 @@ async def on_ready():
 
 
 
-@tasks.loop(seconds=15)
+@tasks.loop(hours=24)
 async def verificar_membros():
     try:
         logger.info("Iniciando verificação periódica...")
